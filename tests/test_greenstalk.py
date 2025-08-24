@@ -1,6 +1,7 @@
 import json
 import os
 import signal
+import socket
 import subprocess
 import time
 from contextlib import contextmanager
@@ -522,3 +523,10 @@ def test_unexpected_eof() -> None:
     with pytest.raises(ConnectionError) as e:
         _parse_response(b"", b"")
     assert e.value.args[0] == "Unexpected EOF"
+
+
+@with_beanstalkd()
+def test_socket_timeout_param(c: Client[str]) -> None:
+    with Client(c._address, encoding=c.encoding, socket_timeout=0.1) as client:
+        with pytest.raises(socket.timeout):
+            client.reserve(timeout=None)
