@@ -253,6 +253,8 @@ class Client(Generic[TBody]):
     :param use: The tube to use after connecting.
     :param watch: The tubes to watch after connecting. The ``default`` tube will
                   be ignored if it's not included.
+    :param socket_timeout: The timeout in seconds for socket operations. If
+                           ``None``, socket operations will block indefinitely.
     """
 
     @overload
@@ -262,6 +264,7 @@ class Client(Generic[TBody]):
         encoding: None,
         use: str = DEFAULT_TUBE,
         watch: Union[str, Iterable[str]] = DEFAULT_TUBE,
+        socket_timeout: Optional[float] = None,
     ) -> None: ...
 
     @overload
@@ -271,6 +274,7 @@ class Client(Generic[TBody]):
         encoding: str = "utf-8",
         use: str = DEFAULT_TUBE,
         watch: Union[str, Iterable[str]] = DEFAULT_TUBE,
+        socket_timeout: Optional[float] = None,
     ) -> None: ...
 
     def __init__(
@@ -279,6 +283,7 @@ class Client(Generic[TBody]):
         encoding: Optional[str] = "utf-8",
         use: str = DEFAULT_TUBE,
         watch: Union[str, Iterable[str]] = DEFAULT_TUBE,
+        socket_timeout: Optional[float] = None,
     ) -> None:
         if isinstance(address, str):
             self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -286,6 +291,8 @@ class Client(Generic[TBody]):
         else:
             self._sock = socket.create_connection(address)
 
+        if socket_timeout is not None:
+            self._sock.settimeout(socket_timeout)
         self._reader = self._sock.makefile("rb")
         self._address = address
         self.encoding = encoding
